@@ -10,7 +10,6 @@
 #define MAX 80 
 #define PORT 8080 
 #define SA struct sockaddr 
-#define MAX_THREAD 5
 
 int main() 
 { 
@@ -48,13 +47,15 @@ void run(server_t *server) {
     chat = malloc(sizeof(struct chatting_server));
     chat->server = server;
     chat->connfd = connfd;
+    pthread_t pthread;
+    pthread_create(&pthread, NULL, chatting, (void *)chat);
     chatting(chat); 
   }
 }
 
-void chatting(void *ct)
+void *chatting(void *chat_ptr)
 { 
-  struct chatting_server *chat = (struct chatting_server *)ct;
+  struct chatting_server *chat = (struct chatting_server *)chat_ptr;
   int connfd = chat->connfd;
   char buff[MAX]; 
   int n; 
@@ -81,6 +82,7 @@ void chatting(void *ct)
       break; 
     } 
   } 
+  return 0;
 } 
 
 int initialize_connection(void) {

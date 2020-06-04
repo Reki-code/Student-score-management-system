@@ -1,6 +1,8 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
 #include <stdbool.h>
+#include <pthread.h>
+#define MAX_THREAD 5
 
 typedef struct server {
   int sockfd;
@@ -16,6 +18,6 @@ struct chatting_server {
   server_t *server;
   int connfd;
 };
-void chatting(void *chat);
+void *chatting(void *chat);
 
 #endif
