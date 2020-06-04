@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "split.h"
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
@@ -49,11 +50,41 @@ void run(server_t *server) {
   }
 }
 
+// TODO: verify_password
+bool verify_password(server_t *server, char *name, char *password) {
+  printf("pass:`%s` name: `%s`\n", password, name);
+  if (strncmp(name, "admin", 5) == 0 && strncmp(password, "admin", 5) == 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
 void chatting(void *chat_ptr) {
   struct chatting_server *chat = (struct chatting_server *)chat_ptr;
   int connfd = chat->connfd;
   char buff[MAX];
-  // infinite loop for chat
+  bool islogin = false;
+  do {
+    read(connfd, buff, sizeof(buff));
+    printf("%s", "login: ");
+    printf("`%s`\n", buff);
+
+    // check password
+    char buf[1024];
+    size_t argc;
+    char *argv[20];
+
+    strcpy(buf, buff);
+    argc = split(buf, argv, 20);
+    if (argc == 2) {
+      islogin = verify_password(chat->server, argv[0], argv[1]); 
+    }
+    // send rsp to client
+    bzero(buff, MAX);
+    sprintf(buff, "%s", islogin ? "success" : "failed");
+    write(connfd, buff, sizeof(buff));
+  } while (islogin == false);
+
   while (true) {
     bzero(buff, MAX);
     // read the message from client and copy it in buffer
@@ -109,12 +140,12 @@ void destory_server(server_t *server) {
   close(server->sockfd);
   thpool_destroy(server->workers);
 }
-int send_str(int sock, const char *str){
+int send_str(int sock, const char *str) {
   int n, len = strlen(str);
-  while (len > 0)
-  {
+  while (len > 0) {
     n = write(sock, str, len);
-    if (n < 0) return n;
+    if (n < 0)
+      return n;
     str += n;
     len -= n;
   }

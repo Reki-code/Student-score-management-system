@@ -47,11 +47,35 @@ int get_input(char *buffer, char *cmd) {
 void run(client_t *client) {
   char buff[MAX];
   char cmd[32];
+
+  bool login = false;
+  printf("欢迎使用学生成绩管理系统\n");
+  printf("请输入用户名和秘密(空格分开): ");
+  do {
+    char *buf = NULL;
+    int nread;
+    size_t len;
+    nread = getline(&buf, &len, stdin);
+    if (nread == -1) {
+      perror("getline");
+    }
+    buf[nread - 1] = '\0';
+    write(client->sockfd, buf, nread);
+    free(buf);
+    
+    read(client->sockfd, buff, sizeof(buff));
+    if (buff[0] == 's') {
+      login = true;
+    } else {
+      printf("用户名或密码错误\n重新输入:");
+    }
+  } while (login == false);
+
   while (client->running) {
     bzero(cmd, sizeof(cmd));
     get_input(buff, cmd);
     printf("input: `%s`\n", cmd);
-    void(*command)(client_t*);
+    void (*command)(client_t *);
     command = get_command(client, cmd);
     command(client);
   }
@@ -64,7 +88,7 @@ client_t *initialize_client(void) {
   return client;
 }
 
-void setup_command_map(map * map) {
+void setup_command_map(map *map) {
   *map = map_create();
   map_set(*map, "nothing", do_nothing);
   map_set(*map, "exit", exit_command);
@@ -74,7 +98,7 @@ void setup_command_map(map * map) {
   map_set(*map, "login", login_command);
 }
 void (*get_command(client_t *client, char *cmd))(client_t *) {
-  void(*command)(client_t*);
+  void (*command)(client_t *);
   map map = client->commands;
   if (map_contains(map, cmd)) {
     command = map_get(map, cmd);
@@ -84,8 +108,8 @@ void (*get_command(client_t *client, char *cmd))(client_t *) {
   return command;
 }
 
-void destroy_client(client_t *client) { 
-  close(client->sockfd); 
+void destroy_client(client_t *client) {
+  close(client->sockfd);
   map_destroy(client->commands);
 }
 

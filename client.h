@@ -1,7 +1,7 @@
 #ifndef _CLIENT_H_
 #define _CLIENT_H_
-#include <stdbool.h>
 #include "map.h"
+#include <stdbool.h>
 
 typedef struct client client_t;
 
