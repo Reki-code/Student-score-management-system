@@ -45,8 +45,6 @@ void run(server_t *server) {
     chat = malloc(sizeof(struct chatting_server));
     chat->server = server;
     chat->connfd = connfd;
-    /* pthread_create(&pthread, NULL, chatting, (void *)chat); */
-    /* chatting(chat); */
     thpool_add_work(server->workers, chatting, (void *)chat);
   }
 }
@@ -55,29 +53,22 @@ void chatting(void *chat_ptr) {
   struct chatting_server *chat = (struct chatting_server *)chat_ptr;
   int connfd = chat->connfd;
   char buff[MAX];
-  int n;
   // infinite loop for chat
   while (true) {
     bzero(buff, MAX);
-
     // read the message from client and copy it in buffer
     read(connfd, buff, sizeof(buff));
     // print buffer which contains the client contents
     printf("From client: %s\t To client : ", buff);
-    bzero(buff, MAX);
-    n = 0;
-    // copy server message in the buffer
-    while ((buff[n++] = getchar()) != '\n')
-      ;
-
-    // and send that buffer to client
-    write(connfd, buff, sizeof(buff));
-
     // if msg contains "Exit" then server exit and chat ended.
     if (strncmp("exit", buff, 4) == 0) {
-      printf("Server Exit...\n");
       break;
+      /* printf("Server Exit...\n"); */
+      /* break; */
     }
+
+    bzero(buff, MAX);
+    send_str(connfd, "学生成绩管理系统\nhelp for help\nlogin for login");
   }
 }
 
@@ -117,4 +108,15 @@ server_t *initialize_server(void) {
 void destory_server(server_t *server) {
   close(server->sockfd);
   thpool_destroy(server->workers);
+}
+int send_str(int sock, const char *str){
+  int n, len = strlen(str);
+  while (len > 0)
+  {
+    n = write(sock, str, len);
+    if (n < 0) return n;
+    str += n;
+    len -= n;
+  }
+  return 0;
 }

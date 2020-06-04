@@ -6,7 +6,7 @@ all : server client
 server : server.c thpool.o
 	$(CC) $(ARGS) -o $@ $^ -pthread
 
-client : client.c 
+client : client.c map.o client_command.o
 	$(CC) $(ARGS) -o $@ $^
 
 clean :

@@ -21,5 +21,6 @@ struct chatting_server {
   int connfd;
 };
 void chatting(void *chat);
+int send_str(int sock, const char *str);
 
 #endif

@@ -1,4 +1,5 @@
 #include "client.h"
+#include "client_command.h"
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
@@ -16,36 +17,77 @@ int main() {
   run(client);
   destroy_client(client);
 }
+int get_input(char *buffer, char *cmd);
+int get_input(char *buffer, char *cmd) {
+  printf("> ");
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read = 0;
+  read = getline(&line, &len, stdin);
+  if (read == -1) {
+    perror("getline");
+    exit(1);
+  }
+  line[read - 1] = '\0';
+  strncpy(buffer, line, read);
+
+  char ch;
+  for (int i = 0; i < 32; i++) {
+    ch = line[i];
+    if (ch == ' ' || ch == '\0') {
+      break;
+    }
+    cmd[i] = ch;
+  }
+
+  free(line);
+  return read;
+}
 
 void run(client_t *client) {
-  int sockfd = client->sockfd;
   char buff[MAX];
-  int n;
+  char cmd[32];
   while (client->running) {
-    bzero(buff, sizeof(buff));
-    printf("> ");
-    n = 0;
-    while ((buff[n++] = getchar()) != '\n') {
-      ;
-    }
-    write(sockfd, buff, sizeof(buff));
-    bzero(buff, sizeof(buff));
-    read(sockfd, buff, sizeof(buff));
-    printf("From Server : %s", buff);
-    if ((strncmp(buff, "exit", 4)) == 0) {
-      client->running = false;
-      printf("Client Exit...\n");
-    }
+    bzero(cmd, sizeof(cmd));
+    get_input(buff, cmd);
+    printf("input: `%s`\n", cmd);
+    void(*command)(client_t*);
+    command = get_command(client, cmd);
+    command(client);
   }
 }
 client_t *initialize_client(void) {
   client_t *client = malloc(sizeof(client_t));
   client->sockfd = initialize_connection();
   client->running = true;
+  setup_command_map(&client->commands);
   return client;
 }
 
-void destroy_client(client_t *client) { close(client->sockfd); }
+void setup_command_map(map * map) {
+  *map = map_create();
+  map_set(*map, "nothing", do_nothing);
+  map_set(*map, "exit", exit_command);
+  map_set(*map, "list", list_command);
+  map_set(*map, "save", save_command);
+  map_set(*map, "find", find_command);
+  map_set(*map, "login", login_command);
+}
+void (*get_command(client_t *client, char *cmd))(client_t *) {
+  void(*command)(client_t*);
+  map map = client->commands;
+  if (map_contains(map, cmd)) {
+    command = map_get(map, cmd);
+  } else {
+    command = map_get(map, "nothing");
+  }
+  return command;
+}
+
+void destroy_client(client_t *client) { 
+  close(client->sockfd); 
+  map_destroy(client->commands);
+}
 
 int initialize_connection(void) {
   int sockfd;
