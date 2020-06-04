@@ -45,13 +45,13 @@ void run(server_t *server) {
     chat = malloc(sizeof(struct chatting_server));
     chat->server = server;
     chat->connfd = connfd;
-    pthread_t pthread;
-    pthread_create(&pthread, NULL, chatting, (void *)chat);
-    chatting(chat);
+    /* pthread_create(&pthread, NULL, chatting, (void *)chat); */
+    /* chatting(chat); */
+    thpool_add_work(server->workers, chatting, (void *)chat);
   }
 }
 
-void *chatting(void *chat_ptr) {
+void chatting(void *chat_ptr) {
   struct chatting_server *chat = (struct chatting_server *)chat_ptr;
   int connfd = chat->connfd;
   char buff[MAX];
@@ -79,7 +79,6 @@ void *chatting(void *chat_ptr) {
       break;
     }
   }
-  return 0;
 }
 
 int initialize_connection(void) {
@@ -112,7 +111,10 @@ server_t *initialize_server(void) {
   server = malloc(sizeof(server_t));
   server->sockfd = initialize_connection();
   server->running = true;
+  server->workers = thpool_init(MAX_THREAD);
   return server;
 }
-
-void destory_server(server_t *server) { close(server->sockfd); }
+void destory_server(server_t *server) {
+  close(server->sockfd);
+  thpool_destroy(server->workers);
+}
