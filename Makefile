@@ -1,13 +1,13 @@
-CC := clang
-ARGS = -Wall -O2 -I .
+CC := clang 
+ARGS := -Wall -O2 -I.
 
-all: server client
+all : server client
 
-server: server.c
+server : server.c 
 	$(CC) $(ARGS) -o server server.c -lpthread
 
-client: client.c
+client : client.c 
 	$(CC) $(ARGS) -o client client.c
 
-clean:
-	rm -f *.o server client *~
+clean :
+	rm - f *.o server client * ~

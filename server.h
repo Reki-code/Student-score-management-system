@@ -1,7 +1,7 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
-#include <stdbool.h>
 #include <pthread.h>
+#include <stdbool.h>
 #define MAX_THREAD 5
 
 typedef struct server {
