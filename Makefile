@@ -3,7 +3,7 @@ ARGS := -Wall -O2 -I.
 
 all : server client
 
-server : server.c thpool.o split.o
+server : server.c thpool.o split.o csv.o
 	$(CC) $(ARGS) -o $@ $^ -pthread
 
 client : client.c map.o client_command.o

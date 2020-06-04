@@ -50,14 +50,24 @@ void run(server_t *server) {
   }
 }
 
-// TODO: verify_password
 bool verify_password(server_t *server, char *name, char *password) {
   printf("pass:`%s` name: `%s`\n", password, name);
-  if (strncmp(name, "admin", 5) == 0 && strncmp(password, "admin", 5) == 0) {
-    return true;
-  } else {
-    return false;
+  CSV_BUFFER *password_csv_buffer = server->password_csv_buffer;
+
+  bool login = false;
+  char buff[MAX];
+  int height = csv_get_height(password_csv_buffer);
+  for (int row = 1; row < height; row++) {
+    csv_get_field(buff, MAX, password_csv_buffer, row, 0);
+    if (strcmp(buff, name) == 0) {
+      csv_get_field(buff, MAX, password_csv_buffer, row, 1);
+      if (strcmp(buff, password) == 0) {
+        login = true;
+        break;
+      }
+    }
   }
+  return login;
 }
 void chatting(void *chat_ptr) {
   struct chatting_server *chat = (struct chatting_server *)chat_ptr;
@@ -124,8 +134,9 @@ int initialize_connection(void) {
   if ((bind(sockfd, (SA *)&servaddr, sizeof(servaddr))) != 0) {
     printf("socket bind failed...\n");
     exit(0);
-  } else
+  } else {
     printf("Socket successfully binded..\n");
+  }
   return sockfd;
 }
 server_t *initialize_server(void) {
@@ -134,11 +145,14 @@ server_t *initialize_server(void) {
   server->sockfd = initialize_connection();
   server->running = true;
   server->workers = thpool_init(MAX_THREAD);
+  server->password_csv_buffer = csv_create_buffer();
+  csv_load(server->password_csv_buffer, "password.csv");
   return server;
 }
 void destory_server(server_t *server) {
   close(server->sockfd);
   thpool_destroy(server->workers);
+  csv_destroy_buffer();
 }
 int send_str(int sock, const char *str) {
   int n, len = strlen(str);

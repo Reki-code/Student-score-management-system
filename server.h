@@ -1,7 +1,7 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
 #include "thpool.h"
-#include <pthread.h>
+#include "csv.h"
 #include <stdbool.h>
 #define MAX_THREAD 5
 
@@ -9,6 +9,7 @@ typedef struct server {
   int sockfd;
   bool running;
   threadpool workers;
+  CSV_BUFFER *password_csv_buffer;
 } server_t;
 
 server_t *initialize_server(void);
