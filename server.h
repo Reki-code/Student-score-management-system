@@ -11,6 +11,11 @@ server_t *initialize_server(void);
 void destory_server(server_t *server);
 int initialize_connection(void);
 void run(server_t *server);
-void chatting(int connfd, server_t *server);
+
+struct chatting_server {
+  server_t *server;
+  int connfd;
+};
+void chatting(void *chat);
 
 #endif

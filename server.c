@@ -10,6 +10,7 @@
 #define MAX 80 
 #define PORT 8080 
 #define SA struct sockaddr 
+#define MAX_THREAD 5
 
 int main() 
 { 
@@ -26,7 +27,6 @@ void run(server_t *server) {
   struct sockaddr_in cli; 
 
   while (server->running) {
-    // Now server is ready to listen and verification 
     if ((listen(sockfd, 5)) != 0) { 
       printf("Listen failed...\n"); 
       exit(0); 
@@ -44,12 +44,18 @@ void run(server_t *server) {
       printf("server acccept the client...\n"); 
     }
     // Function for chatting between client and server 
-    chatting(connfd, server); 
+    struct chatting_server *chat;
+    chat = malloc(sizeof(struct chatting_server));
+    chat->server = server;
+    chat->connfd = connfd;
+    chatting(chat); 
   }
 }
 
-void chatting(int connfd, server_t *server)
+void chatting(void *ct)
 { 
+  struct chatting_server *chat = (struct chatting_server *)ct;
+  int connfd = chat->connfd;
   char buff[MAX]; 
   int n; 
   // infinite loop for chat 
