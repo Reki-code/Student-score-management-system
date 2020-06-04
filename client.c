@@ -95,7 +95,6 @@ void setup_command_map(map *map) {
   map_set(*map, "list", list_command);
   map_set(*map, "save", save_command);
   map_set(*map, "find", find_command);
-  map_set(*map, "login", login_command);
 }
 void (*get_command(client_t *client, char *cmd))(client_t *) {
   void (*command)(client_t *);
