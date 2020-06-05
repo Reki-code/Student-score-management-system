@@ -15,7 +15,5 @@ int initialize_connection(void);
 client_t *initialize_client(void);
 void run(client_t *client);
 void destroy_client(client_t *client);
-void setup_command_map(map *);
-void (*get_command(client_t *client, char *cmd))(client_t *);
 
 #endif
