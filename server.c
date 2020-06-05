@@ -3,6 +3,7 @@
 #include "split.h"
 #include <netdb.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,9 +14,19 @@
 #define PORT 8080
 #define SA struct sockaddr
 
+volatile sig_atomic_t running;
+void sig_handler(int signo) {
+  if (signo == SIGINT) {
+    running = false;
+  }
+}
+
 int main() {
   server_t *server;
   server = initialize_server();
+  if (signal(SIGINT, sig_handler) == SIG_ERR) {
+    perror("sigal");
+  }
   run(server);
   destory_server(server);
 }
@@ -26,7 +37,7 @@ void run(server_t *server) {
   int connfd;
   struct sockaddr_in cli;
 
-  while (server->running) {
+  while (running) {
     if ((listen(sockfd, 5)) != 0) {
       printf("Listen failed...\n");
       exit(0);
@@ -142,7 +153,7 @@ server_t *initialize_server(void) {
   server_t *server;
   server = malloc(sizeof(server_t));
   server->sockfd = initialize_connection();
-  server->running = true;
+  running = true;
   server->workers = thpool_init(MAX_THREAD);
   server->password_csv_buffer = csv_create_buffer();
   csv_load(server->password_csv_buffer, "password.csv");
@@ -151,8 +162,9 @@ server_t *initialize_server(void) {
 }
 
 void destory_server(server_t *server) {
-  close(server->sockfd);
+  thpool_wait(server->workers);
   thpool_destroy(server->workers);
+  close(server->sockfd);
   csv_destroy_buffer();
 }
 int send_str(int sock, const char *str) {

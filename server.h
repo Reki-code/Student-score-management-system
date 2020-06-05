@@ -8,7 +8,6 @@
 
 typedef struct server {
   int sockfd;
-  bool running;
   threadpool workers;
   CSV_BUFFER *password_csv_buffer;
   map commands;
