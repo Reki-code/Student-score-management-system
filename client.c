@@ -73,9 +73,9 @@ void run(client_t *client) {
   while (client->running) {
     bzero(cmd, sizeof(cmd));
     get_input(buff, cmd);
-    void (*command)(client_t *);
+    void (*command)(client_t *, char *, char *);
     command = get_command(client, cmd);
-    command(client);
+    command(client, buff, cmd);
   }
 }
 client_t *initialize_client(void) {
