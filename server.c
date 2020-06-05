@@ -1,4 +1,6 @@
 #include "server.h"
+#include "server_command.h"
+#include "split.h"
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -7,7 +9,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "split.h"
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
@@ -51,7 +52,6 @@ void run(server_t *server) {
 }
 
 bool verify_password(server_t *server, char *name, char *password) {
-  printf("pass:`%s` name: `%s`\n", password, name);
   CSV_BUFFER *password_csv_buffer = server->password_csv_buffer;
 
   bool login = false;
@@ -76,18 +76,14 @@ void chatting(void *chat_ptr) {
   bool islogin = false;
   do {
     read(connfd, buff, sizeof(buff));
-    printf("%s", "login: ");
-    printf("`%s`\n", buff);
-
     // check password
     char buf[1024];
     size_t argc;
     char *argv[20];
-
     strcpy(buf, buff);
     argc = split(buf, argv, 20);
     if (argc == 2) {
-      islogin = verify_password(chat->server, argv[0], argv[1]); 
+      islogin = verify_password(chat->server, argv[0], argv[1]);
     }
     // send rsp to client
     bzero(buff, MAX);
@@ -95,21 +91,24 @@ void chatting(void *chat_ptr) {
     write(connfd, buff, sizeof(buff));
   } while (islogin == false);
 
-  while (true) {
+  chatting_t chatting;
+  chatting.connfd = connfd;
+  chatting.running = true;
+  while (chatting.running) {
     bzero(buff, MAX);
-    // read the message from client and copy it in buffer
     read(connfd, buff, sizeof(buff));
-    // print buffer which contains the client contents
-    printf("From client: %s\t To client : ", buff);
-    // if msg contains "Exit" then server exit and chat ended.
-    if (strncmp("exit", buff, 4) == 0) {
-      break;
-      /* printf("Server Exit...\n"); */
-      /* break; */
-    }
-
-    bzero(buff, MAX);
-    send_str(connfd, "学生成绩管理系统\nhelp for help\nlogin for login");
+    // split buff
+    char buf[1024];
+    size_t argc;
+    char *argv[20];
+    strcpy(buf, buff);
+    argc = split(buf, argv, 20);
+    // find_command
+    void (*command)(server_t *, chatting_t *);
+    server_t *server = chat->server;
+    command = get_command(server, argv[0]);
+    // command exectue
+    command(server, &chatting);
   }
 }
 
@@ -139,6 +138,7 @@ int initialize_connection(void) {
   }
   return sockfd;
 }
+void setup_command_map(map *map);
 server_t *initialize_server(void) {
   server_t *server;
   server = malloc(sizeof(server_t));
@@ -147,8 +147,28 @@ server_t *initialize_server(void) {
   server->workers = thpool_init(MAX_THREAD);
   server->password_csv_buffer = csv_create_buffer();
   csv_load(server->password_csv_buffer, "password.csv");
+  setup_command_map(&server->commands);
   return server;
 }
+void setup_command_map(map *map) {
+  *map = map_create();
+  map_set(*map, "nothing", do_nothing);
+  map_set(*map, "exit", exit_command);
+  map_set(*map, "list", list_command);
+  map_set(*map, "save", save_command);
+  map_set(*map, "find", find_command);
+}
+void (*get_command(server_t *server, char *cmd))(server_t *, chatting_t *) {
+  void (*command)(server_t *, chatting_t *);
+  map map = server->commands;
+  if (map_contains(map, cmd)) {
+    command = map_get(map, cmd);
+  } else {
+    command = map_get(map, "nothing");
+  }
+  return command;
+}
+
 void destory_server(server_t *server) {
   close(server->sockfd);
   thpool_destroy(server->workers);

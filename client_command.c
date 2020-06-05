@@ -7,10 +7,9 @@ void (*find_command_hander(client_t *client, char *cmd))(client_t *client) {
 }
 void do_nothing(client_t *client) {}
 void exit_command(client_t *client) {
-  char buff[MAX];
   int sockfd = client->sockfd;
   client->running = false;
-  write(sockfd, buff, sizeof(buff));
+  write(sockfd, "exit", 5);
 }
 void list_command(client_t *client){};
 void save_command(client_t *client){};

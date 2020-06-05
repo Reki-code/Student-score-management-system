@@ -62,7 +62,7 @@ void run(client_t *client) {
     buf[nread - 1] = '\0';
     write(client->sockfd, buf, nread);
     free(buf);
-    
+
     read(client->sockfd, buff, sizeof(buff));
     if (buff[0] == 's') {
       login = true;
@@ -74,7 +74,6 @@ void run(client_t *client) {
   while (client->running) {
     bzero(cmd, sizeof(cmd));
     get_input(buff, cmd);
-    printf("input: `%s`\n", cmd);
     void (*command)(client_t *);
     command = get_command(client, cmd);
     command(client);
