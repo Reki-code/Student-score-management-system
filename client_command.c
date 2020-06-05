@@ -1,11 +1,13 @@
 #include "client_command.h"
 #include <strings.h>
 #include <unistd.h>
+#include <stdio.h>
 
 void setup_command_map(map *map) {
   *map = map_create();
   map_set(*map, "nothing", do_nothing);
   map_set(*map, "exit", exit_command);
+  map_set(*map, "help", help_command);
   map_set(*map, "list", list_command);
   map_set(*map, "save", save_command);
   map_set(*map, "find", find_command);
@@ -21,11 +23,21 @@ void (*get_command(client_t *client, char *cmd))(client_t *) {
   return command;
 }
 
-void do_nothing(client_t *client) {}
+void do_nothing(client_t *client) {
+  printf("wrong command\n");
+}
 void exit_command(client_t *client) {
   int sockfd = client->sockfd;
   client->running = false;
   write(sockfd, "exit", 5);
+}
+void help_command(client_t *client) {
+  char buff[MAX];
+  int sockfd = client->sockfd;
+  write(sockfd, "help", 5);
+  // TODO: read big string
+  read(sockfd, buff, MAX);
+  printf("%s", buff);
 }
 void list_command(client_t *client){};
 void save_command(client_t *client){};

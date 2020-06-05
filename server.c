@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define MAX 80
+#define MAX 512
 #define PORT 8080
 #define SA struct sockaddr
 
@@ -129,6 +129,8 @@ int initialize_connection(void) {
   struct sockaddr_in servaddr;
   // socket create and verification
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  int option = 1;
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
   if (sockfd == -1) {
     printf("socket creation failed...\n");
     exit(0);
@@ -143,6 +145,7 @@ int initialize_connection(void) {
   // Binding newly created socket to given IP and verification
   if ((bind(sockfd, (SA *)&servaddr, sizeof(servaddr))) != 0) {
     printf("socket bind failed...\n");
+    perror("");
     exit(0);
   } else {
     printf("Socket successfully binded..\n");
