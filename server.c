@@ -10,7 +10,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define MAX 512
 #define PORT 8080
 #define SA struct sockaddr
 

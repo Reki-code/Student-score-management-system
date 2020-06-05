@@ -1,6 +1,7 @@
 #ifndef _CLIENT_H_
 #define _CLIENT_H_
 #include "map.h"
+#include "socket_conf.h"
 #include <stdbool.h>
 
 typedef struct client client_t;

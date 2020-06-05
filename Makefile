@@ -6,7 +6,7 @@ all : server client
 server : server.c thpool.o split.o csv.o map.o server_command.o
 	$(CC) $(ARGS) -o $@ $^ -pthread
 
-client : client.c map.o client_command.o
+client : client.c map.o client_command.o sds.o
 	$(CC) $(ARGS) -o $@ $^
 
 clean :

@@ -3,6 +3,7 @@
 #include "csv.h"
 #include "map.h"
 #include "thpool.h"
+#include "socket_conf.h"
 #include <stdbool.h>
 #define MAX_THREAD 5
 

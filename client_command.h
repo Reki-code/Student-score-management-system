@@ -1,7 +1,6 @@
 #ifndef _CLIENT_COMMAND_H_
 #define _CLIENT_COMMAND_H_
 #include "client.h"
-#define MAX 512
 
 void setup_command_map(map *map);
 void (*get_command(client_t *client, char *cmd))(client_t *);

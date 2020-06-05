@@ -1,7 +1,11 @@
 #include "client_command.h"
+#include "socket_conf.h"
+#include "sds.h"
 #include <strings.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+static ssize_t read_large(int connfd, sds *msg);
 
 void setup_command_map(map *map) {
   *map = map_create();
@@ -32,13 +36,30 @@ void exit_command(client_t *client) {
   write(sockfd, "exit", 5);
 }
 void help_command(client_t *client) {
-  char buff[MAX];
   int sockfd = client->sockfd;
   write(sockfd, "help", 5);
-  // TODO: read big string
-  read(sockfd, buff, MAX);
-  printf("%s", buff);
+  sds msg;
+  read_large(sockfd, &msg);
+  printf("%s\n", msg);
+  sdsfree(msg);
 }
 void list_command(client_t *client){};
 void save_command(client_t *client){};
 void find_command(client_t *client){};
+static ssize_t read_large(int connfd, sds *msg) {
+  char buff[MAX];
+  bzero(buff, MAX);
+  read(connfd, buff, MAX);
+  char *remaining;
+  size_t length;
+  length = strtol(buff, &remaining, 10);
+  *msg = sdsempty();
+  ssize_t nread;
+  while (length > 0) {
+    bzero(buff, MAX);
+    nread = read(connfd, buff, MAX);
+    length -= nread;
+    sdscatlen(*msg, buff, nread);
+  }
+  return nread;
+}
