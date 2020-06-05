@@ -30,6 +30,5 @@ struct chatting_server {
 };
 void chatting(void *chat);
 int send_str(int sock, const char *str);
-void (*get_command(server_t *client, char *cmd))(server_t *, chatting_t *);
 
 #endif
