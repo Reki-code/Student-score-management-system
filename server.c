@@ -157,6 +157,9 @@ server_t *initialize_server(void) {
   server->sockfd = initialize_connection();
   running = true;
   server->workers = thpool_init(MAX_THREAD);
+  server->record_csv_buffer = csv_create_buffer();
+  csv_load(server->record_csv_buffer, "record.csv");
+  Sem_init(&server->record_sem, 0, 1);
   server->password_csv_buffer = csv_create_buffer();
   csv_load(server->password_csv_buffer, "password.csv");
   setup_command_map(&server->commands);
@@ -168,6 +171,7 @@ void destory_server(server_t *server) {
   thpool_destroy(server->workers);
   close(server->sockfd);
   csv_destroy_buffer();
+  map_destroy(server->commands);
 }
 int send_str(int sock, const char *str) {
   int n, len = strlen(str);

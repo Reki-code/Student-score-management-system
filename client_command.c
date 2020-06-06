@@ -1,10 +1,10 @@
 #include "client_command.h"
-#include "socket_conf.h"
 #include "sds.h"
-#include <strings.h>
-#include <unistd.h>
+#include "socket_conf.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
+#include <unistd.h>
 static ssize_t read_large(int connfd, sds *msg);
 
 void setup_command_map(map *map) {
@@ -16,7 +16,8 @@ void setup_command_map(map *map) {
   map_set(*map, "save", save_command);
   map_set(*map, "find", find_command);
 }
-void (*get_command(client_t *client, char *cmd))(client_t *, char *line, char *cmd) {
+void (*get_command(client_t *client, char *cmd))(client_t *, char *line,
+                                                 char *cmd) {
   void (*command)(client_t *, char *, char *);
   map map = client->commands;
   if (map_contains(map, cmd)) {
@@ -43,7 +44,14 @@ void help_command(client_t *client, char *line, char *cmd) {
   printf("%s\n", msg);
   sdsfree(msg);
 }
-void list_command(client_t *client, char *line, char *cmd){};
+void list_command(client_t *client, char *line, char *cmd) {
+  int sockfd = client->sockfd;
+  write(sockfd, "list", 5);
+  sds msg;
+  read_large(sockfd, &msg);
+  printf("%s\n", msg);
+  sdsfree(msg);
+};
 void save_command(client_t *client, char *line, char *cmd){};
 void find_command(client_t *client, char *line, char *cmd){};
 static ssize_t read_large(int connfd, sds *msg) {

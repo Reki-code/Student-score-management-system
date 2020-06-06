@@ -2,14 +2,17 @@
 #define _SERVER_H_
 #include "csv.h"
 #include "map.h"
-#include "thpool.h"
+#include "sem.h"
 #include "socket_conf.h"
+#include "thpool.h"
 #include <stdbool.h>
 #define MAX_THREAD 5
 
 typedef struct server {
   int sockfd;
   threadpool workers;
+  CSV_BUFFER *record_csv_buffer;
+  sem_t record_sem;
   CSV_BUFFER *password_csv_buffer;
   map commands;
 } server_t;
