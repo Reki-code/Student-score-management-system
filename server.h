@@ -5,14 +5,17 @@
 #include "sem.h"
 #include "socket_conf.h"
 #include "thpool.h"
+#include "cJSON.h"
 #include <stdbool.h>
 #define MAX_THREAD 5
 
 typedef struct server {
   int sockfd;
   threadpool workers;
-  CSV_BUFFER *record_csv_buffer;
-  sem_t record_sem;
+  struct {
+    cJSON *record;
+    sem_t record_sem;
+  };
   CSV_BUFFER *password_csv_buffer;
   map commands;
 } server_t;

@@ -52,7 +52,14 @@ void list_command(client_t *client, char *line, char *cmd) {
   printf("%s\n", msg);
   sdsfree(msg);
 };
-void save_command(client_t *client, char *line, char *cmd){};
+void save_command(client_t *client, char *line, char *cmd){
+  int sockfd = client->sockfd;
+  write(sockfd, "save", 5);
+  char buff[MAX];
+  sprintf(buff, "%s", line);
+  printf("write %s\n", line);
+  write(sockfd, buff, MAX);
+};
 void find_command(client_t *client, char *line, char *cmd){};
 static ssize_t read_large(int connfd, sds *msg) {
   char buff[MAX];
