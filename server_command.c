@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-static ssize_t write_large(int, const void *, size_t);
+static ssize_t write_large(int, void *, size_t);
 
 void setup_command_map(map *map) {
   *map = map_create();
@@ -33,7 +33,7 @@ void exit_command(server_t *server, chatting_t *chat) {
   close(chat->connfd);
 }
 void help_command(server_t *server, chatting_t *chat) {
-  const char *help_info = "学生成绩管理系统\nhelp\t\t获取帮助信息\nlist\t\t打印"
+  char *help_info = "学生成绩管理系统\nhelp\t\t获取帮助信息\nlist\t\t打印"
                           "学生成绩\nsave\t\t保存成绩\nfind\t\t查询成绩\n";
   unsigned long len = strlen(help_info);
   write_large(chat->connfd, help_info, len);
@@ -104,15 +104,15 @@ void save_command(server_t *server, chatting_t *chat) {
 
 }
 void find_command(server_t *server, chatting_t *chat) {}
-static ssize_t write_large(int connfd, const void *msg, size_t len) {
+static ssize_t write_large(int connfd, void *msg, size_t len) {
   char buff[MAX];
   bzero(buff, MAX);
   sprintf(buff, "%ld", len);
   write(connfd, buff, MAX);
   ssize_t nwrite;
   while (len > 0) {
-    bzero(buff, MAX);
     nwrite = write(connfd, msg, len);
+    sdsrange(msg ,nwrite, -1);
     len -= nwrite;
   }
   return len;
