@@ -2,6 +2,7 @@
 #include "sds.h"
 #include "sem.h"
 #include "split.h"
+#include "record_ops.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -51,8 +52,7 @@ void list_command(server_t *server, chatting_t *chat) {
     cJSON *score = cJSON_GetObjectItem(student, "score");
     cJSON *item;
     cJSON_ArrayForEach(item, score) {
-      cJSON *child = item->child;
-      sprintf(line_buffer, "  %s:\t%d\n", child->string, child->valueint);
+      sprintf(line_buffer, "  %s:\t%d\n", item->string, item->valueint);
       rsp = sdscat(rsp, line_buffer);
     }
   }
@@ -64,44 +64,42 @@ void save_command(server_t *server, chatting_t *chat) {
   char buff[MAX];
   bzero(buff, MAX);
   read(connfd, buff, sizeof(buff));
-  sds rsp = sdsempty();
-
-  char buf[1024];
-  size_t argc;
-  char *argv[20];
-  strcpy(buf, buff);           // 0     1      2   3
-  argc = split(buf, argv, 20); // save, class, id, score
+  bool success;
+  int argc;
+  sds *argv = sdssplitargs(buff, &argc);
+  /* agrv = {0: save, 1: math, 2: 170901131, 3: 100} */
   if (argc == 4) {
-    cJSON *record = server->record;
+    int id_n = strtol(argv[2], NULL, 10);
     bool has_id = false;
+    cJSON *record = server->record;
     P(&server->record_sem);
     cJSON *student;
     cJSON_ArrayForEach(student, record) {
       cJSON *id = cJSON_GetObjectItem(student, "id");
-      if (strcmp(argv[2], id->valuestring) == 0) {
+      if (id->valueint == id_n) {
         has_id = true;
         cJSON *score = cJSON_GetObjectItem(student, "score");
-        cJSON *item;
-        cJSON_ArrayForEach(item, score) {
-          cJSON *child = item->child;
-          if (strcmp(argv[1], child->string) == 0) {
-            // TODO: write back
-            child->valuestring = argv[3];
-          }
-          sprintf(buf, "  %s:\t%d\n", child->string, child->valueint);
-          rsp = sdscat(rsp, buf);
+        cJSON *score_item = cJSON_GetObjectItem(score, argv[1]);
+        if (score_item == NULL) {
+          success = score_add_class(score, argv[1], argv[3]);
+        } else {
+          int score_int = strtol(argv[3], NULL, 10);
+          success = cJSON_SetNumberValue(score_item, score_int);
         }
+        break;
       }
     }
     if (has_id == false) {
-      //TODO: create id
+      printf("not found id\n");
+      success = record_add_student(record, argv[2], argv[1], argv[3]);
     }
     V(&server->record_sem);
-  } else {
-    rsp = sdscat(rsp, "wrong command");
   }
-  write_large(connfd, rsp, sdslen(rsp));
+  sdsfreesplitres(argv, argc);
+  bzero(buff, sizeof(buff));
+  sprintf(buff, "%s\n", success ? "保存成功" : "保存失败");
 
+  write_large(connfd, buff, sizeof(buff));
 }
 void find_command(server_t *server, chatting_t *chat) {}
 static ssize_t write_large(int connfd, void *msg, size_t len) {

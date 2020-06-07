@@ -41,7 +41,7 @@ void help_command(client_t *client, char *line, char *cmd) {
   write(sockfd, "help", 5);
   sds msg;
   read_large(sockfd, &msg);
-  printf("%s\n", msg);
+  printf("%s", msg);
   sdsfree(msg);
 }
 void list_command(client_t *client, char *line, char *cmd) {
@@ -49,7 +49,7 @@ void list_command(client_t *client, char *line, char *cmd) {
   write(sockfd, "list", 5);
   sds msg;
   read_large(sockfd, &msg);
-  printf("%s\n", msg);
+  printf("%s", msg);
   sdsfree(msg);
 };
 void save_command(client_t *client, char *line, char *cmd){
@@ -57,8 +57,10 @@ void save_command(client_t *client, char *line, char *cmd){
   write(sockfd, "save", 5);
   char buff[MAX];
   sprintf(buff, "%s", line);
-  printf("write %s\n", line);
   write(sockfd, buff, MAX);
+  sds rsp;
+  read_large(sockfd, &rsp);
+  printf("%s", rsp);
 };
 void find_command(client_t *client, char *line, char *cmd){};
 static ssize_t read_large(int connfd, sds *msg) {
