@@ -90,7 +90,6 @@ void save_command(server_t *server, chatting_t *chat) {
       }
     }
     if (has_id == false) {
-      printf("not found id\n");
       success = record_add_student(record, argv[2], argv[1], argv[3]);
     }
     V(&server->record_sem);
@@ -101,7 +100,46 @@ void save_command(server_t *server, chatting_t *chat) {
 
   write_large(connfd, buff, sizeof(buff));
 }
-void find_command(server_t *server, chatting_t *chat) {}
+void find_command(server_t *server, chatting_t *chat) {
+  int connfd = chat->connfd;
+  char buff[MAX];
+  bzero(buff, MAX);
+  read(connfd, buff, sizeof(buff));
+  int argc;
+  sds *argv = sdssplitargs(buff, &argc);
+
+  bool has_id = false;
+  sds rsp = sdsempty();
+  /* agrv = {0: find, 1: id, 2: 170901131 } */
+  if (argc == 3) {
+    int id_n = strtol(argv[2], NULL, 10);
+    cJSON *record = server->record;
+    P(&server->record_sem);
+    cJSON *student;
+    cJSON_ArrayForEach(student, record) {
+      cJSON *id = cJSON_GetObjectItem(student, "id");
+      if (id->valueint == id_n) {
+        has_id = true;
+        sprintf(buff, "学号: %d\n", id->valueint);
+        rsp = sdscat(rsp, buff);
+        cJSON *score = cJSON_GetObjectItem(student, "score");
+        cJSON *item;
+        cJSON_ArrayForEach(item, score) {
+          sprintf(buff, "  %s:\t%d\n", item->string, item->valueint);
+          rsp = sdscat(rsp, buff);
+        }
+      }
+    }
+    V(&server->record_sem);
+  }
+  if (has_id) {
+    write_large(connfd, rsp, sdslen(rsp));
+  } else {
+    bzero(buff, sizeof(buff));
+    sprintf(buff, "%s\n", "未能找到指定学号");
+    write_large(connfd, buff, sizeof(buff));
+  }
+}
 static ssize_t write_large(int connfd, void *msg, size_t len) {
   char buff[MAX];
   bzero(buff, MAX);

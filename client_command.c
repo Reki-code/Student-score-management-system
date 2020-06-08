@@ -62,7 +62,16 @@ void save_command(client_t *client, char *line, char *cmd){
   read_large(sockfd, &rsp);
   printf("%s", rsp);
 };
-void find_command(client_t *client, char *line, char *cmd){};
+void find_command(client_t *client, char *line, char *cmd){
+  int sockfd = client->sockfd;
+  write(sockfd, "find", 5);
+  char buff[MAX];
+  sprintf(buff, "%s", line);
+  write(sockfd, buff, MAX);
+  sds rsp;
+  read_large(sockfd, &rsp);
+  printf("%s", rsp);
+};
 static ssize_t read_large(int connfd, sds *msg) {
   char buff[MAX];
   bzero(buff, MAX);
