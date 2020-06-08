@@ -2,13 +2,13 @@
 #include "server_command.h"
 #include "split.h"
 #include <fcntl.h>
-#include <sys/mman.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>

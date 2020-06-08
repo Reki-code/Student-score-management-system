@@ -1,8 +1,8 @@
 #include "server_command.h"
+#include "record_ops.h"
 #include "sds.h"
 #include "sem.h"
 #include "split.h"
-#include "record_ops.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -13,7 +13,6 @@ static void help_command(server_t *server, chatting_t *chat);
 static void list_command(server_t *server, chatting_t *chat);
 static void save_command(server_t *server, chatting_t *chat);
 static void find_command(server_t *server, chatting_t *chat);
-
 
 void setup_command_map(map *map) {
   *map = map_create();
@@ -35,14 +34,16 @@ void (*get_command(server_t *server, char *cmd))(server_t *, chatting_t *) {
   return command;
 }
 
-static void do_nothing(server_t *server, chatting_t *chat) { printf("do nothing\n"); }
+static void do_nothing(server_t *server, chatting_t *chat) {
+  printf("do nothing\n");
+}
 static void exit_command(server_t *server, chatting_t *chat) {
   chat->running = false;
   close(chat->connfd);
 }
 static void help_command(server_t *server, chatting_t *chat) {
   char *help_info = "学生成绩管理系统\nhelp\t\t获取帮助信息\nlist\t\t打印"
-                          "学生成绩\nsave\t\t保存成绩\nfind\t\t查询成绩\n";
+                    "学生成绩\nsave\t\t保存成绩\nfind\t\t查询成绩\n";
   unsigned long len = strlen(help_info);
   write_large(chat->connfd, help_info, len);
 }
@@ -155,7 +156,7 @@ static ssize_t write_large(int connfd, void *msg, size_t len) {
   ssize_t nwrite;
   while (len > 0) {
     nwrite = write(connfd, msg, len);
-    sdsrange(msg ,nwrite, -1);
+    sdsrange(msg, nwrite, -1);
     len -= nwrite;
   }
   return len;

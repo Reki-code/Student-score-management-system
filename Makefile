@@ -1,5 +1,5 @@
 CC := clang 
-ARGS := -Wall -O2 -I.
+ARGS := -Wall -O2 -I. -Wno-unused-function
 
 all : server client
 

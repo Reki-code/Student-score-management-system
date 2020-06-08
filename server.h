@@ -1,11 +1,11 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
+#include "cJSON.h"
 #include "csv.h"
 #include "map.h"
 #include "sem.h"
 #include "socket_conf.h"
 #include "thpool.h"
-#include "cJSON.h"
 #include <stdbool.h>
 #define MAX_THREAD 5
 

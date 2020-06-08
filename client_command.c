@@ -58,7 +58,7 @@ static void list_command(client_t *client, char *line, char *cmd) {
   printf("%s", msg);
   sdsfree(msg);
 };
-static void save_command(client_t *client, char *line, char *cmd){
+static void save_command(client_t *client, char *line, char *cmd) {
   int sockfd = client->sockfd;
   write(sockfd, "save", 5);
   char buff[MAX];
@@ -68,7 +68,7 @@ static void save_command(client_t *client, char *line, char *cmd){
   read_large(sockfd, &rsp);
   printf("%s", rsp);
 };
-static void find_command(client_t *client, char *line, char *cmd){
+static void find_command(client_t *client, char *line, char *cmd) {
   int sockfd = client->sockfd;
   write(sockfd, "find", 5);
   char buff[MAX];
