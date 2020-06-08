@@ -12,6 +12,7 @@ static void help_command(client_t *client, char *line, char *cmd);
 static void list_command(client_t *client, char *line, char *cmd);
 static void save_command(client_t *client, char *line, char *cmd);
 static void find_command(client_t *client, char *line, char *cmd);
+static void sort_command(client_t *client, char *line, char *cmd);
 
 void setup_command_map(map *map) {
   *map = map_create();
@@ -21,6 +22,7 @@ void setup_command_map(map *map) {
   map_set(*map, "list", list_command);
   map_set(*map, "save", save_command);
   map_set(*map, "find", find_command);
+  map_set(*map, "sort", sort_command);
 }
 void (*get_command(client_t *client, char *cmd))(client_t *, char *line,
                                                  char *cmd) {
@@ -78,6 +80,16 @@ static void find_command(client_t *client, char *line, char *cmd) {
   read_large(sockfd, &rsp);
   printf("%s", rsp);
 };
+static void sort_command(client_t *client, char *line, char *cmd) {
+  int sockfd = client->sockfd;
+  write(sockfd, "sort", 5);
+  char buff[MAX];
+  sprintf(buff, "%s", line);
+  write(sockfd, buff, MAX);
+  sds rsp;
+  read_large(sockfd, &rsp);
+  printf("%s", rsp);
+}
 static ssize_t read_large(int connfd, sds *msg) {
   char buff[MAX];
   bzero(buff, MAX);

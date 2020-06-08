@@ -1,4 +1,5 @@
 #include "server_command.h"
+#include "key_index.h"
 #include "record_ops.h"
 #include "sds.h"
 #include "sem.h"
@@ -13,6 +14,7 @@ static void help_command(server_t *server, chatting_t *chat);
 static void list_command(server_t *server, chatting_t *chat);
 static void save_command(server_t *server, chatting_t *chat);
 static void find_command(server_t *server, chatting_t *chat);
+static void sort_command(server_t *server, chatting_t *chat);
 
 void setup_command_map(map *map) {
   *map = map_create();
@@ -22,6 +24,7 @@ void setup_command_map(map *map) {
   map_set(*map, "list", list_command);
   map_set(*map, "save", save_command);
   map_set(*map, "find", find_command);
+  map_set(*map, "sort", sort_command);
 }
 void (*get_command(server_t *server, char *cmd))(server_t *, chatting_t *) {
   void (*command)(server_t *, chatting_t *);
@@ -72,7 +75,7 @@ static void save_command(server_t *server, chatting_t *chat) {
   char buff[MAX];
   bzero(buff, MAX);
   read(connfd, buff, sizeof(buff));
-  bool success;
+  bool success = false;
   int argc;
   sds *argv = sdssplitargs(buff, &argc);
   /* agrv = {0: save, 1: math, 2: 170901131, 3: 100} */
@@ -147,6 +150,54 @@ static void find_command(server_t *server, chatting_t *chat) {
     sprintf(buff, "%s\n", "未能找到指定学号");
     write_large(connfd, buff, sizeof(buff));
   }
+}
+static void sort_command(server_t *server, chatting_t *chat) {
+  int connfd = chat->connfd;
+  char buff[MAX];
+  bzero(buff, MAX);
+  read(connfd, buff, sizeof(buff));
+  int argc;
+  sds *argv = sdssplitargs(buff, &argc);
+  sds rsp = sdsempty();
+  /* agrv = {0: sort, 1: class } */
+  if (argc == 2) {
+    cJSON *record = server->record;
+    int nstudent = 0;
+    P(&server->record_sem);
+    cJSON *student;
+    int size = cJSON_GetArraySize(record);
+    key_index_t *ki = malloc(sizeof(key_index_t) * size);
+    for (int i = 0; i < size; i++) {
+      student = cJSON_GetArrayItem(record, i);
+      cJSON *scores = cJSON_GetObjectItem(student, "score");
+      cJSON *score = cJSON_GetObjectItem(scores, argv[1]);
+      if (score != NULL) {
+        ki[nstudent].index = i;
+        ki[nstudent].key = score->valueint;
+        nstudent++;
+      }
+    }
+    if (nstudent != 0) {
+      key_index_qsort(ki, nstudent);
+      for (int i = 0; i < nstudent; i++) {
+        int index = ki[i].index;
+        student = cJSON_GetArrayItem(record, index);
+        cJSON *id = cJSON_GetObjectItem(student, "id");
+        sprintf(buff, "学号: %d\n", id->valueint);
+        rsp = sdscat(rsp, buff);
+        cJSON *scores = cJSON_GetObjectItem(student, "score");
+        cJSON *score = cJSON_GetObjectItem(scores, argv[1]);
+        sprintf(buff, "  %s: %d\n", score->string, score->valueint);
+        rsp = sdscat(rsp, buff);
+      }
+    }
+    V(&server->record_sem);
+  } else {
+    sprintf(buff, "wrong command\n");
+    rsp = sdscat(rsp, buff);
+  }
+  sdsfreesplitres(argv, argc);
+  write_large(connfd, rsp, sdslen(rsp));
 }
 static ssize_t write_large(int connfd, void *msg, size_t len) {
   char buff[MAX];
