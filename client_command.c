@@ -6,6 +6,12 @@
 #include <strings.h>
 #include <unistd.h>
 static ssize_t read_large(int connfd, sds *msg);
+static void do_nothing(client_t *client, char *line, char *cmd);
+static void exit_command(client_t *client, char *line, char *cmd);
+static void help_command(client_t *client, char *line, char *cmd);
+static void list_command(client_t *client, char *line, char *cmd);
+static void save_command(client_t *client, char *line, char *cmd);
+static void find_command(client_t *client, char *line, char *cmd);
 
 void setup_command_map(map *map) {
   *map = map_create();
@@ -28,15 +34,15 @@ void (*get_command(client_t *client, char *cmd))(client_t *, char *line,
   return command;
 }
 
-void do_nothing(client_t *client, char *line, char *cmd) {
+static void do_nothing(client_t *client, char *line, char *cmd) {
   printf("wrong command\n");
 }
-void exit_command(client_t *client, char *line, char *cmd) {
+static void exit_command(client_t *client, char *line, char *cmd) {
   int sockfd = client->sockfd;
   client->running = false;
   write(sockfd, "exit", 5);
 }
-void help_command(client_t *client, char *line, char *cmd) {
+static void help_command(client_t *client, char *line, char *cmd) {
   int sockfd = client->sockfd;
   write(sockfd, "help", 5);
   sds msg;
@@ -44,7 +50,7 @@ void help_command(client_t *client, char *line, char *cmd) {
   printf("%s", msg);
   sdsfree(msg);
 }
-void list_command(client_t *client, char *line, char *cmd) {
+static void list_command(client_t *client, char *line, char *cmd) {
   int sockfd = client->sockfd;
   write(sockfd, "list", 5);
   sds msg;
@@ -52,7 +58,7 @@ void list_command(client_t *client, char *line, char *cmd) {
   printf("%s", msg);
   sdsfree(msg);
 };
-void save_command(client_t *client, char *line, char *cmd){
+static void save_command(client_t *client, char *line, char *cmd){
   int sockfd = client->sockfd;
   write(sockfd, "save", 5);
   char buff[MAX];
@@ -62,7 +68,7 @@ void save_command(client_t *client, char *line, char *cmd){
   read_large(sockfd, &rsp);
   printf("%s", rsp);
 };
-void find_command(client_t *client, char *line, char *cmd){
+static void find_command(client_t *client, char *line, char *cmd){
   int sockfd = client->sockfd;
   write(sockfd, "find", 5);
   char buff[MAX];

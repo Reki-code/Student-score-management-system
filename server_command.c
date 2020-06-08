@@ -7,6 +7,13 @@
 #include <string.h>
 #include <unistd.h>
 static ssize_t write_large(int, void *, size_t);
+static void do_nothing(server_t *server, chatting_t *chat);
+static void exit_command(server_t *server, chatting_t *chat);
+static void help_command(server_t *server, chatting_t *chat);
+static void list_command(server_t *server, chatting_t *chat);
+static void save_command(server_t *server, chatting_t *chat);
+static void find_command(server_t *server, chatting_t *chat);
+
 
 void setup_command_map(map *map) {
   *map = map_create();
@@ -28,18 +35,18 @@ void (*get_command(server_t *server, char *cmd))(server_t *, chatting_t *) {
   return command;
 }
 
-void do_nothing(server_t *server, chatting_t *chat) { printf("do nothing\n"); }
-void exit_command(server_t *server, chatting_t *chat) {
+static void do_nothing(server_t *server, chatting_t *chat) { printf("do nothing\n"); }
+static void exit_command(server_t *server, chatting_t *chat) {
   chat->running = false;
   close(chat->connfd);
 }
-void help_command(server_t *server, chatting_t *chat) {
+static void help_command(server_t *server, chatting_t *chat) {
   char *help_info = "学生成绩管理系统\nhelp\t\t获取帮助信息\nlist\t\t打印"
                           "学生成绩\nsave\t\t保存成绩\nfind\t\t查询成绩\n";
   unsigned long len = strlen(help_info);
   write_large(chat->connfd, help_info, len);
 }
-void list_command(server_t *server, chatting_t *chat) {
+static void list_command(server_t *server, chatting_t *chat) {
   cJSON *record = server->record;
   sds rsp = sdsempty();
   char line_buffer[MAX];
@@ -59,7 +66,7 @@ void list_command(server_t *server, chatting_t *chat) {
   V(&server->record_sem);
   write_large(chat->connfd, rsp, sdslen(rsp));
 }
-void save_command(server_t *server, chatting_t *chat) {
+static void save_command(server_t *server, chatting_t *chat) {
   int connfd = chat->connfd;
   char buff[MAX];
   bzero(buff, MAX);
@@ -100,7 +107,7 @@ void save_command(server_t *server, chatting_t *chat) {
 
   write_large(connfd, buff, sizeof(buff));
 }
-void find_command(server_t *server, chatting_t *chat) {
+static void find_command(server_t *server, chatting_t *chat) {
   int connfd = chat->connfd;
   char buff[MAX];
   bzero(buff, MAX);
